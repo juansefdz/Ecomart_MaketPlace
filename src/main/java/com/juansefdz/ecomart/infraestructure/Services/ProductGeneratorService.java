@@ -1,21 +1,20 @@
-package com.juansefdz.ecomart.Controller;
+package com.juansefdz.ecomart.infraestructure.Services;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.ChatOptionsBuilder;
+import org.springframework.stereotype.Service;
+
 
 import com.juansefdz.ecomart.Utils.TokenCounter;
 import com.knuddels.jtokkit.api.ModelType;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.ChatOptionsBuilder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/product-generator")
-public class ProductGeneratorController {
+@Service
+public class ProductGeneratorService {
 
     private final ChatClient chatClient;
     private final TokenCounter tokenCounter;
 
-    public ProductGeneratorController(ChatClient.Builder chatClientBuilder, TokenCounter tokenCounter) {
+    public ProductGeneratorService(ChatClient.Builder chatClientBuilder, TokenCounter tokenCounter) {
         this.chatClient = chatClientBuilder
                 .defaultOptions(ChatOptionsBuilder.builder()
                         .withModel("gpt-4o-mini")
@@ -25,19 +24,17 @@ public class ProductGeneratorController {
         this.tokenCounter = tokenCounter;
     }
 
-    @GetMapping
-    public String ProductGenerator() {
-        var question = "Generate 5 ecological products";
+    public String generateProducts(String question) {
         var systemPrompt = """
                 You are a product generator focused on ecological products.
                 Generate a list of products based on the user's request.
                 """;
 
-
+        // Calcular tokens
         int tokens = tokenCounter.countTokens(systemPrompt + question, ModelType.GPT_4O_MINI);
         System.out.println("Tokens used: " + tokens);
 
-
+        // Generar respuesta
         return this.chatClient.prompt()
                 .system(systemPrompt)
                 .user(question)

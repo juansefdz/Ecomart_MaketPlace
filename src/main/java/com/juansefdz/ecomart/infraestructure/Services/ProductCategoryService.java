@@ -1,22 +1,19 @@
-package com.juansefdz.ecomart.Controller;
+package com.juansefdz.ecomart.infraestructure.Services;
+
 
 import com.knuddels.jtokkit.api.ModelType;
 import com.juansefdz.ecomart.Utils.TokenCounter;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.prompt.ChatOptionsBuilder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
-@RestController
-@RequestMapping("/product-category")
-public class ProductCategoryController {
+@Service
+public class ProductCategoryService {
 
     private final ChatClient chatClient;
     private final TokenCounter tokenCounter;
 
-    public ProductCategoryController(ChatClient.Builder chatClientBuilder, TokenCounter tokenCounter) {
+    public ProductCategoryService(ChatClient.Builder chatClientBuilder, TokenCounter tokenCounter) {
         this.chatClient = chatClientBuilder
                 .defaultOptions(ChatOptionsBuilder.builder()
                         .withModel("gpt-4o-mini")
@@ -26,9 +23,8 @@ public class ProductCategoryController {
         this.tokenCounter = tokenCounter;
     }
 
-    @GetMapping
-    public String ProductCategorize(String product) {
-        //prompt engineering
+    public String categorizeProduct(String product) {
+        // prompt engineering
         var system = """
                 acts as a product categorize,
                 you only have to answer the name of the selected product category.
@@ -46,9 +42,11 @@ public class ProductCategoryController {
                 category: "Electronics"
                 """;
 
-        var tokens = tokenCounter.countTokens(system + product, ModelType.GPT_4O_MINI);
-        System.out.println(tokens);
+        // Calcula tokens
+        int tokens = tokenCounter.countTokens(system + product, ModelType.GPT_4O_MINI);
+        System.out.println("Tokens used: " + tokens);
 
+        // Genera respuesta
         return this.chatClient.prompt()
                 .system(system)
                 .user(product)
@@ -56,7 +54,6 @@ public class ProductCategoryController {
                         .withModel("gpt-4o")
                         .withTemperature(0.80)
                         .build())
-                .advisors(new SimpleLoggerAdvisor())
                 .call()
                 .content();
     }
